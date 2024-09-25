@@ -8,15 +8,6 @@ function degreesToRads(degrees: number): number {
   return degrees * (Math.PI / 180)
 }
 
-// const useCircleStore = create((set) => ({
-//   circles: {},
-//   points: {},
-//   addPoint: (x, y, z) =>
-//     set((state) => ({
-//       points: [...state.points, [x, y, z]],
-//     })),
-// }))
-
 type CircleProps = {
   store: any
   index: number
@@ -44,18 +35,8 @@ const Circle = ({
   const meshRef = useRef()
 
   useEffect(() => {
-    console.log('useEffect')
     store.subscribe((state) => (circleRef.current = state.circles[index]))
   }, [])
-
-  console.log('rendered circle', {
-    radius,
-    angle,
-    direction,
-    speed,
-    origin,
-    endEffector,
-  })
 
   useFrame((state, delta) => {
     if (circleRef.current) {
@@ -64,12 +45,9 @@ const Circle = ({
           new THREE.Vector3(...circleRef.current.origin),
           new THREE.Vector3(...circleRef.current.endEffector),
         ])
-        // console.log('circle origin', circleRef.current.origin)
-        // console.log('lines new geometry', lineRef.current.geometry)
       }
 
       if (meshRef.current) {
-        // console.log('setting mesh to', circleRef.current.origin)
         meshRef.current.position.set(...circleRef.current.origin)
       }
     }
@@ -90,7 +68,6 @@ const Circle = ({
 }
 
 const PointSpline = ({ store, color }: { store: any; color: string }) => {
-  console.log('rendering points spline')
   const lineRef = useRef()
   const colorRef = useRef()
   const pointsRef = useRef(store.getState().points)
@@ -102,12 +79,8 @@ const PointSpline = ({ store, color }: { store: any; color: string }) => {
   useFrame((state, delta) => {
     // console.log('pointsRef', pointsRef.current)
     if (pointsRef.current && pointsRef.current.length) {
-      // console.log(pointsRef.current.length)
-      const curve = new THREE.SplineCurve(
-        pointsRef.current.map((point) => {
-          return new THREE.Vector2(point[0], point[1])
-        })
-      )
+      // console.log(pointsRef.current)
+      const curve = new THREE.SplineCurve(pointsRef.current)
       lineRef.current.geometry.setFromPoints(
         curve.getPoints(pointsRef.current.length * 2)
       )
@@ -139,9 +112,9 @@ const CircleRenderer = ({
   const useCircleStore = create((set) => ({
     circles: [],
     points: [],
-    addPoint: (x, y, z) =>
+    addPoint: (point) =>
       set((state) => ({
-        points: [...state.points, [x, y, z]],
+        points: [...state.points, point],
       })),
   }))
 
@@ -203,7 +176,12 @@ const CircleRenderer = ({
       circlesFrame[circlesFrame.length - 1]?.endEffector &&
       renderClock.getElapsedTime() > 0.1
     ) {
-      addPoint(...circlesFrame[circlesFrame.length - 1].endEffector)
+      const nextEndEffector = circlesFrame[circlesFrame.length - 1].endEffector
+      const nextPoint = new THREE.Vector2(
+        nextEndEffector[0],
+        nextEndEffector[1]
+      )
+      addPoint(nextPoint)
     }
 
     if (useCircleStore.getState().points.length > 15000) {
