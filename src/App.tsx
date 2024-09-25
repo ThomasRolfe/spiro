@@ -8,16 +8,17 @@ function degreesToRads(degrees: number): number {
   return degrees * (Math.PI / 180)
 }
 
-const useCircleStore = create((set) => ({
-  circles: [],
-  points: [],
-  addPoint: (x, y, z) =>
-    set((state) => ({
-      points: [...state.points, [x, y, z]],
-    })),
-}))
+// const useCircleStore = create((set) => ({
+//   circles: {},
+//   points: {},
+//   addPoint: (x, y, z) =>
+//     set((state) => ({
+//       points: [...state.points, [x, y, z]],
+//     })),
+// }))
 
 type CircleProps = {
+  store: any
   index: number
   parentIndex?: number
   radius: number
@@ -29,6 +30,7 @@ type CircleProps = {
 }
 
 const Circle = ({
+  store,
   index,
   radius,
   angle,
@@ -37,15 +39,13 @@ const Circle = ({
   origin,
   endEffector,
 }: CircleProps) => {
-  const circleRef = useRef(useCircleStore.getState().circles[index])
+  const circleRef = useRef(store.getState().circles[index])
   const lineRef = useRef()
   const meshRef = useRef()
 
   useEffect(() => {
     console.log('useEffect')
-    useCircleStore.subscribe(
-      (state) => (circleRef.current = state.circles[index])
-    )
+    store.subscribe((state) => (circleRef.current = state.circles[index]))
   }, [])
 
   console.log('rendered circle', {
@@ -77,51 +77,76 @@ const Circle = ({
 
   return (
     <>
-      <mesh ref={meshRef} position={[0, 0, 0]}>
+      {/* <mesh ref={meshRef} position={[0, 0, 0]} color="black">
         <ringGeometry args={[radius, radius + 0.01, 100]} />
+        <lineBasicMaterial color="grey" />
       </mesh>
       <line ref={lineRef}>
         <bufferGeometry />
-        <lineBasicMaterial color="coral" />
-      </line>
+        <lineBasicMaterial color="teal" />
+      </line> */}
     </>
   )
 }
 
-const PointSpline = () => {
+const PointSpline = ({ store, color }: { store: any; color: string }) => {
   console.log('rendering points spline')
   const lineRef = useRef()
-  const pointsRef = useRef(useCircleStore.getState().points)
+  const colorRef = useRef()
+  const pointsRef = useRef(store.getState().points)
 
   useEffect(() => {
-    useCircleStore.subscribe((state) => (pointsRef.current = state.points))
+    store.subscribe((state) => (pointsRef.current = state.points))
   }, [])
 
   useFrame((state, delta) => {
     // console.log('pointsRef', pointsRef.current)
     if (pointsRef.current && pointsRef.current.length) {
+      // console.log(pointsRef.current.length)
       const curve = new THREE.SplineCurve(
         pointsRef.current.map((point) => {
           return new THREE.Vector2(point[0], point[1])
         })
       )
       lineRef.current.geometry.setFromPoints(
-        curve.getPoints(pointsRef.current.length)
+        curve.getPoints(pointsRef.current.length * 2)
       )
+      // console.log(colorRef.current.color)
+      // colorRef.current.color.setFromVector3(
+      //   new THREE.Vector3(point[0], point[1], 0)
+      // )
+      // console.log(colorRef.current)
     }
   })
+
+  // const hsl = `hsl(${1}, 100%, 50%)`
 
   return (
     <line ref={lineRef}>
       <bufferGeometry />
-      <lineBasicMaterial color="blue" />
+      <lineBasicMaterial ref={colorRef} color={color} />
     </line>
   )
 }
 
-const CircleRenderer = ({ circleSeries }: { circleSeries: Array<object> }) => {
+const CircleRenderer = ({
+  color,
+  circleSeries,
+}: {
+  color: string
+  circleSeries: Array<object>
+}) => {
+  const useCircleStore = create((set) => ({
+    circles: [],
+    points: [],
+    addPoint: (x, y, z) =>
+      set((state) => ({
+        points: [...state.points, [x, y, z]],
+      })),
+  }))
+
   // Eventually this can be passed into circle renderer based on user input
-  const circlesSeriesRef = useRef(useCircleStore.getState().circles)
+  const circlesSeriesRef = useRef(circleSeries)
   const addPoint = useCircleStore.getState().addPoint
   const renderClock = new THREE.Clock()
 
@@ -138,13 +163,15 @@ const CircleRenderer = ({ circleSeries }: { circleSeries: Array<object> }) => {
   useFrame((state, delta) => {
     let circlesFrame = []
 
+    const fixedDelta = 0.05
+
     for (let i = 0; circlesSeriesRef.current.length > i; i++) {
       const currentCircle = circlesSeriesRef.current[i]
       const parent = circlesSeriesRef.current[currentCircle.parentIndex]
-      const currentOrigin = parent ? parent.endEffector : [0, 0]
+      const currentOrigin = parent ? parent.endEffector : currentCircle.origin
       const newAngle =
         currentCircle.angle +
-        (currentCircle.direction === 'cw' ? delta : -delta) *
+        (currentCircle.direction === 'cw' ? fixedDelta : -fixedDelta) *
           (currentCircle.speed * 50)
 
       const lineEnd = [
@@ -173,10 +200,16 @@ const CircleRenderer = ({ circleSeries }: { circleSeries: Array<object> }) => {
 
     // Fudge the annoying start time end effectors
     if (
-      circlesFrame[circlesFrame.length - 1].endEffector &&
-      renderClock.getElapsedTime() > 2
+      circlesFrame[circlesFrame.length - 1]?.endEffector &&
+      renderClock.getElapsedTime() > 0.1
     ) {
       addPoint(...circlesFrame[circlesFrame.length - 1].endEffector)
+    }
+
+    if (useCircleStore.getState().points.length > 15000) {
+      useCircleStore.setState({
+        points: useCircleStore.getState().points.toSpliced(0, 5),
+      })
     }
   })
 
@@ -185,9 +218,9 @@ const CircleRenderer = ({ circleSeries }: { circleSeries: Array<object> }) => {
   return (
     <>
       {circleSeries.map((circle) => {
-        return <Circle key={circle.index} {...circle} />
+        return <Circle store={useCircleStore} key={circle.index} {...circle} />
       })}
-      <PointSpline />
+      <PointSpline color={color} store={useCircleStore} />
     </>
   )
 }
@@ -205,53 +238,127 @@ function App() {
       origin: [0, 0, 0],
       endEffector: [0, 0, 0],
     },
+    // {
+    //   index: 1,
+    //   parentIndex: 0,
+    //   radius: 1,
+    //   angle: 0,
+    //   direction: 'cw',
+    //   speed: 1,
+    //   origin: [0, 0, 0],
+    //   endEffector: [0, 0, 0],
+    // },
     {
       index: 1,
       parentIndex: 0,
-      radius: 0.5,
+      radius: 1,
       angle: 90,
-      direction: 'acw',
-      speed: 4,
+      direction: 'cw',
+      speed: 1,
       origin: [0, 0, 0],
       endEffector: [0, 0, 0],
     },
     {
       index: 2,
       parentIndex: 1,
-      radius: 0.6,
-      angle: 210,
+      radius: 1 / 6,
+      angle: 230,
       direction: 'acw',
-      speed: 1.7,
-      origin: [0, 0, 0],
-      endEffector: [0, 0, 0],
-    },
-    {
-      index: 3,
-      parentIndex: 2,
-      radius: 0.2,
-      angle: 210,
-      direction: 'cw',
-      speed: 1.2,
-      origin: [0, 0, 0],
-      endEffector: [0, 0, 0],
-    },
-    {
-      index: 4,
-      parentIndex: 3,
-      radius: 0.2,
-      angle: 210,
-      direction: 'cw',
       speed: 5,
       origin: [0, 0, 0],
       endEffector: [0, 0, 0],
     },
+    // {
+    //   index: 3,
+    //   parentIndex: 2,
+    //   radius: 0.1,
+    //   angle: 210,
+    //   direction: 'cw',
+    //   speed: 5.5,
+    //   origin: [0, 0, 0],
+    //   endEffector: [0, 0, 0],
+    // },
+    // {
+    //   index: 5,
+    //   parentIndex: 4,
+    //   radius: 0.07,
+    //   angle: 210,
+    //   direction: 'acw',
+    //   speed: 1,
+    //   origin: [0, 0, 0],
+    //   endEffector: [0, 0, 0],
+    // },
+    // {
+    //   index: 6,
+    //   parentIndex: 5,
+    //   radius: 0.05,
+    //   angle: 210,
+    //   direction: 'cw',
+    //   speed: 3,
+    //   origin: [0, 0, 0],
+    //   endEffector: [0, 0, 0],
+    // },
+  ]
+
+  const circles2 = [
     {
-      index: 5,
-      parentIndex: 4,
-      radius: 0.7,
-      angle: 210,
+      index: 0,
+      radius: 1,
+      angle: 0,
       direction: 'cw',
-      speed: 1.3,
+      speed: 1,
+      origin: [2, 0, 0],
+      endEffector: [0, 0, 0],
+    },
+    {
+      index: 1,
+      parentIndex: 0,
+      radius: 1,
+      angle: 90,
+      direction: 'cw',
+      speed: 1,
+      origin: [0, 0, 0],
+      endEffector: [0, 0, 0],
+    },
+    {
+      index: 2,
+      parentIndex: 1,
+      radius: 1 / 20,
+      angle: 230,
+      direction: 'acw',
+      speed: 8,
+      origin: [0, 0, 0],
+      endEffector: [0, 0, 0],
+    },
+  ]
+
+  const circles3 = [
+    {
+      index: 0,
+      radius: 1,
+      angle: 0,
+      direction: 'cw',
+      speed: 1,
+      origin: [-2, 0, 0],
+      endEffector: [0, 0, 0],
+    },
+    {
+      index: 1,
+      parentIndex: 0,
+      radius: 1,
+      angle: 90,
+      direction: 'cw',
+      speed: 1,
+      origin: [0, 0, 0],
+      endEffector: [0, 0, 0],
+    },
+    {
+      index: 2,
+      parentIndex: 1,
+      radius: 1 / 3,
+      angle: 230,
+      direction: 'acw',
+      speed: 3,
       origin: [0, 0, 0],
       endEffector: [0, 0, 0],
     },
@@ -260,7 +367,9 @@ function App() {
   return (
     <div id="canvas-container">
       <Canvas>
-        <CircleRenderer circleSeries={initCircles} />
+        <CircleRenderer color="brown" circleSeries={initCircles} />
+        <CircleRenderer color="coral" circleSeries={circles2} />
+        <CircleRenderer color="hotpink" circleSeries={circles3} />
       </Canvas>
     </div>
   )
