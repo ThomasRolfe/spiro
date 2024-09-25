@@ -55,14 +55,14 @@ const Circle = ({
 
   return (
     <>
-      {/* <mesh ref={meshRef} position={[0, 0, 0]} color="black">
+      <mesh ref={meshRef} position={[0, 0, 0]} color="black">
         <ringGeometry args={[radius, radius + 0.01, 100]} />
         <lineBasicMaterial color="grey" />
       </mesh>
       <line ref={lineRef}>
         <bufferGeometry />
         <lineBasicMaterial color="teal" />
-      </line> */}
+      </line>
     </>
   )
 }
@@ -103,9 +103,11 @@ const PointSpline = ({ store, color }: { store: any; color: string }) => {
 }
 
 const CircleRenderer = ({
+  blueprint,
   color,
   circleSeries,
 }: {
+  blueprint: boolean
   color: string
   circleSeries: Array<object>
 }) => {
@@ -184,6 +186,7 @@ const CircleRenderer = ({
       addPoint(nextPoint)
     }
 
+    // Trim the start of long point arrays to avoid memory hog
     if (useCircleStore.getState().points.length > 15000) {
       useCircleStore.setState({
         points: useCircleStore.getState().points.toSpliced(0, 5),
@@ -195,9 +198,12 @@ const CircleRenderer = ({
 
   return (
     <>
-      {circleSeries.map((circle) => {
-        return <Circle store={useCircleStore} key={circle.index} {...circle} />
-      })}
+      {blueprint &&
+        circleSeries.map((circle) => {
+          return (
+            <Circle store={useCircleStore} key={circle.index} {...circle} />
+          )
+        })}
       <PointSpline color={color} store={useCircleStore} />
     </>
   )
@@ -345,9 +351,21 @@ function App() {
   return (
     <div id="canvas-container">
       <Canvas>
-        <CircleRenderer color="brown" circleSeries={initCircles} />
-        <CircleRenderer color="coral" circleSeries={circles2} />
-        <CircleRenderer color="hotpink" circleSeries={circles3} />
+        <CircleRenderer
+          blueprint={true}
+          color="brown"
+          circleSeries={initCircles}
+        />
+        <CircleRenderer
+          blueprint={false}
+          color="coral"
+          circleSeries={circles2}
+        />
+        <CircleRenderer
+          blueprint={true}
+          color="hotpink"
+          circleSeries={circles3}
+        />
       </Canvas>
     </div>
   )
