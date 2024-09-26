@@ -53,7 +53,7 @@ export const CircleSeriesRenderer = ({
     return useCircleStore.subscribe(
       (state) => (circlesSeriesRef.current = state.circles)
     )
-  }, [])
+  }, [useCircleStore])
 
   useFrame(() => {
     const circlesFrame = calculateNextSeriesFrame(circlesSeriesRef.current)

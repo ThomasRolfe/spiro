@@ -17,7 +17,7 @@ export const PointSpline = ({
 
   useEffect(() => {
     store.subscribe((state) => (pointsRef.current = state.points))
-  }, [])
+  }, [store])
 
   useFrame(() => {
     if (pointsRef.current && pointsRef.current.length) {
