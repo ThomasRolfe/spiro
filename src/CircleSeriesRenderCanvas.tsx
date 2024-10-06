@@ -4,9 +4,9 @@ import { Perf } from 'r3f-perf'
 import { CircleSeriesGear, CircleSeriesRenderer } from './CircleSeriesRenderer'
 
 export const CircleSeriesRenderCanvas = ({
-  circleSeries,
+  circleSeriesArray,
 }: {
-  circleSeries: CircleSeriesGear[]
+  circleSeriesArray: Array<Array<CircleSeriesGear>>
 }) => {
   return (
     <div id="canvas-container">
@@ -18,21 +18,16 @@ export const CircleSeriesRenderCanvas = ({
           maxDistance={20}
           minDistance={2}
         />
-        <CircleSeriesRenderer
-          blueprint={true}
-          color="brown"
-          circleSeries={circleSeries}
-        />
-        {/* <CircleRenderer
-          blueprint={false}
-          color="coral"
-          circleSeries={circles2}
-        /> */}
-        {/* <CircleRenderer
-          blueprint={false}
-          color="hotpink"
-          circleSeries={circles3}
-        /> */}
+        {circleSeriesArray.map((circleSeries, index) => {
+          return (
+            <CircleSeriesRenderer
+              key={index}
+              blueprint={false}
+              color="brown"
+              circleSeries={circleSeries}
+            />
+          )
+        })}
       </Canvas>
     </div>
   )

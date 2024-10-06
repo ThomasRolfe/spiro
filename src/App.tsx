@@ -8,7 +8,7 @@ function App() {
       radius: 0.1,
       angle: 0,
       direction: 'cw' as const,
-      speed: 3 / 10,
+      speed: 0.3,
       origin: [0, 0, 0],
       endEffector: [0, 0, 0],
     },
@@ -68,7 +68,7 @@ function App() {
       radius: 0.5,
       angle: 210,
       direction: 'acw' as const,
-      speed: 3,
+      speed: 1,
       origin: [0, 0, 0],
       endEffector: [0, 0, 0],
     },
@@ -77,10 +77,10 @@ function App() {
   const circles2 = [
     {
       index: 0,
-      radius: 3,
+      radius: 1,
       angle: 0,
       direction: 'cw',
-      speed: 1,
+      speed: 1.3,
       origin: [0, 0, 0],
       endEffector: [0, 0, 0],
     },
@@ -90,7 +90,7 @@ function App() {
       radius: 1.3,
       angle: 90,
       direction: 'cw',
-      speed: 1.2,
+      speed: 9.9,
       origin: [0, 0, 0],
       endEffector: [0, 0, 0],
     },
@@ -100,10 +100,20 @@ function App() {
       radius: 0.56,
       angle: 230,
       direction: 'cw',
-      speed: 3.85,
+      speed: 9.7,
       origin: [0, 0, 0],
       endEffector: [0, 0, 0],
     },
+    // {
+    //   index: 3,
+    //   parentIndex: 2,
+    //   radius: 1.4,
+    //   angle: 0,
+    //   direction: 'cw',
+    //   speed: 9.9,
+    //   origin: [0, 0, 0],
+    //   endEffector: [0, 0, 0],
+    // },
   ]
 
   const circles3 = [
@@ -113,7 +123,7 @@ function App() {
       angle: 0,
       direction: 'cw',
       speed: 1,
-      origin: [-2, 0, 0],
+      origin: [0, 0, 0],
       endEffector: [0, 0, 0],
     },
     {
@@ -122,23 +132,23 @@ function App() {
       radius: 1,
       angle: 90,
       direction: 'cw',
-      speed: 1,
+      speed: 2,
       origin: [0, 0, 0],
       endEffector: [0, 0, 0],
     },
     {
       index: 2,
       parentIndex: 1,
-      radius: 0.2,
+      radius: 0.5,
       angle: 230,
       direction: 'acw',
-      speed: 7.4,
+      speed: 1.2,
       origin: [0, 0, 0],
       endEffector: [0, 0, 0],
     },
   ]
 
-  return <CircleSeriesRenderCanvas circleSeries={initCircles} />
+  return <CircleSeriesRenderCanvas circleSeriesArray={[circles3]} />
 }
 
 export default App
