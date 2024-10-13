@@ -38,11 +38,11 @@ export const Circle = ({ store, index, radius }: CircleProps) => {
     <>
       <mesh ref={meshRef} position={[0, 0, 0]} color="black">
         <ringGeometry args={[radius, radius + 0.01, 50]} />
-        <lineBasicMaterial color="grey" />
+        <lineBasicMaterial color="#60cdf7" />
       </mesh>
       <line ref={lineRef}>
         <bufferGeometry />
-        <lineBasicMaterial color="teal" />
+        <lineDashedMaterial dashSize={1} gapSize={2} color="red" />
       </line>
     </>
   )

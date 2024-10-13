@@ -2,15 +2,16 @@ import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
 import { useRef, useEffect } from 'react'
 import { create } from 'zustand'
-import { Circle } from './Circle'
 import { PointSpline } from './PointSpline'
-import { LCMPeriod } from './utils/LCMPeriod'
+import { LCMPeriod } from '../utils/LCMPeriod'
+import { Blueprint } from './Blueprint'
+import { degreesToRads } from '../utils/degreesToRads'
 
 const FIXED_DELTA = 2
 
 export type CircleSeriesGear = {
   index: number
-  parentIndex?: number
+  // parentIndex?: number
   radius: number
   angle: number
   direction: string
@@ -24,22 +25,24 @@ export interface CircleSeriesState {
   points: Array<THREE.Vector2>
   angleDelta: number
   addPoint: (point: THREE.Vector2) => void
-  incrementDelta: (delta: number) => void
+  incrementDelta: () => void
+  setNewProperties: (circleSeries: CircleSeriesGear[]) => void
 }
 
 export const CircleSeriesRenderer = ({
-  blueprint,
+  showBlueprint,
   color,
   circleSeries,
 }: {
-  blueprint: boolean
+  showBlueprint: boolean
   color: string
   circleSeries: Array<CircleSeriesGear>
 }) => {
-  // Lowest common multiple period. Smallest number of rotations for pattern to repeat
+  // Lowest common multiple period. Smallest number of frames for pattern to repeat
   const lcmPeriod = LCMPeriod(circleSeries.map((circle) => circle.speed))
+  const firstSeriesFrame = calculateNextSeriesFrame(circleSeries)
   const useCircleStore = create<CircleSeriesState>()((set) => ({
-    circles: [],
+    circles: firstSeriesFrame,
     points: [],
     angleDelta: 0,
     addPoint: (point) =>
@@ -50,24 +53,37 @@ export const CircleSeriesRenderer = ({
       set((state) => ({
         angleDelta: state.angleDelta + FIXED_DELTA,
       })),
+    setNewProperties: (circleSeries: CircleSeriesGear[]) => {
+      set((state) => ({
+        ...state,
+        circles: circleSeries,
+        points: [],
+        angleDelta: 0,
+      }))
+    },
   }))
 
+  useEffect(() => {
+    const reset = useCircleStore.getState().setNewProperties
+    circlesSeriesRef.current = firstSeriesFrame
+    reset(firstSeriesFrame)
+  }, [useCircleStore, firstSeriesFrame, circleSeries])
+
   // Eventually this can be passed into circle renderer based on user input
-  const circlesSeriesRef = useRef(circleSeries)
+  const circlesSeriesRef = useRef(firstSeriesFrame)
   const angleDeltaRef = useRef(0)
   const addPoint = useCircleStore.getState().addPoint
   const incrementDelta = useCircleStore.getState().incrementDelta
-  const renderClock = new THREE.Clock()
 
   useEffect(() => {
-    useCircleStore.setState({ circles: circleSeries })
-  }, [useCircleStore, circleSeries])
-
-  useEffect(() => {
-    return useCircleStore.subscribe(
+    const unsubscribeCircleSeriesStore = useCircleStore.subscribe(
       (state) => (circlesSeriesRef.current = state.circles)
     )
-  }, [useCircleStore])
+
+    return () => {
+      unsubscribeCircleSeriesStore()
+    }
+  }, [useCircleStore, firstSeriesFrame])
 
   useEffect(() => {
     return useCircleStore.subscribe(
@@ -77,29 +93,19 @@ export const CircleSeriesRenderer = ({
 
   useFrame(() => {
     const circlesFrame = calculateNextSeriesFrame(circlesSeriesRef.current)
-
     incrementDelta()
     useCircleStore.setState({ circles: circlesFrame })
 
-    // Fudge the annoying start time end effectors
-    if (
-      circlesFrame[circlesFrame.length - 1]?.endEffector &&
-      renderClock.getElapsedTime() > 0.01
-    ) {
-      const nextEndEffector = circlesFrame[circlesFrame.length - 1].endEffector
-      const nextPoint = new THREE.Vector2(
-        nextEndEffector[0],
-        nextEndEffector[1]
-      )
+    const nextEndEffector = circlesFrame[circlesFrame.length - 1].endEffector
+    const nextPoint = new THREE.Vector2(nextEndEffector[0], nextEndEffector[1])
 
-      // Slight buffer of 10 degrees
-      const fullRotations = angleDeltaRef.current / 370
+    // Slight buffer of 10 degrees
+    const fullRotations = angleDeltaRef.current / 380
+    // console.log({ fullRotations })
 
-      // If lcm period > 50, assume it won't get there before the point length limit is hit
-
-      if (fullRotations < lcmPeriod || lcmPeriod > 50) {
-        addPoint(nextPoint)
-      }
+    // If lcm period > 50, assume it won't get there before the point length limit is hit
+    if (lcmPeriod > 200 || fullRotations < lcmPeriod * 2) {
+      addPoint(nextPoint)
     }
 
     // Trim the start of long point arrays to avoid memory hog
@@ -112,23 +118,14 @@ export const CircleSeriesRenderer = ({
 
   return (
     <>
-      {blueprint &&
-        circleSeries.map((circle) => {
-          return (
-            <Circle
-              store={useCircleStore}
-              key={`${Math.random()}`}
-              {...circle}
-            />
-          )
-        })}
+      <Blueprint
+        show={showBlueprint}
+        circleStore={useCircleStore} // passing the series in twice effectively, needs changing
+        circleSeries={circleSeries}
+      />
       <PointSpline color={color} store={useCircleStore} />
     </>
   )
-}
-
-function degreesToRads(degrees: number): number {
-  return degrees * (Math.PI / 180)
 }
 
 const calculateNextSeriesFrame = (circleSeries: CircleSeriesGear[]) => {
@@ -137,25 +134,25 @@ const calculateNextSeriesFrame = (circleSeries: CircleSeriesGear[]) => {
 
   for (let i = 0; circleSeries.length > i; i++) {
     const currentCircle = circleSeries[i]
-    const parent =
-      currentCircle.parentIndex !== undefined
-        ? circleSeries[currentCircle.parentIndex]
-        : null
+    const parent: CircleSeriesGear | null =
+      currentCircle.index !== 0 ? newSeries[currentCircle.index - 1] : null
 
-    const currentOrigin = parent ? parent.endEffector : currentCircle.origin
+    const currentOrigin: number[] = parent
+      ? parent.endEffector
+      : currentCircle.origin
     const newAngle =
       currentCircle.angle +
-      (currentCircle.direction === 'cw' ? fixedDelta : -fixedDelta) *
+      (currentCircle.direction === 'acw' ? fixedDelta : -fixedDelta) *
         currentCircle.speed
 
     const lineEnd = [
       currentOrigin[0] +
-        (currentCircle.direction === 'cw'
+        (currentCircle.direction === 'acw'
           ? Math.cos(degreesToRads(newAngle))
           : -Math.cos(degreesToRads(newAngle))) *
           currentCircle.radius,
       currentOrigin[1] +
-        (currentCircle.direction === 'cw'
+        (currentCircle.direction === 'acw'
           ? Math.sin(degreesToRads(newAngle))
           : -Math.sin(degreesToRads(newAngle))) *
           currentCircle.radius,
