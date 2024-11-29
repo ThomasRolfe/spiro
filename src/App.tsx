@@ -8,6 +8,7 @@ import { Controls } from './controls/Controls'
 // import { circles3 } from './presets/default'
 import { FormProvider, useForm } from 'react-hook-form'
 import { CircleSeriesGear } from './graphRenderer/CircleSeriesRenderer'
+import { letterT } from './presets/default'
 
 type CircleSeriesGearInput = {
   radius: string
@@ -48,7 +49,7 @@ const defaultControlForm = {
         },
       ],
       renderSettings: {
-        color: '#c11f1f',
+        color: '#09CACE',
         showBlueprint: false,
       },
     },
@@ -84,11 +85,9 @@ function App() {
     })
   }
 
-  console.log({ values })
-
   return (
-    <div id="page-container">
-      <div id="controls-container">
+    <div id='page-container' className='dark'>
+      <div id='controls-container' className='bg-slate-900 text-white'>
         <FormProvider {...methods}>
           <Controls
             circleSeriesState={circleSeriesState}
@@ -97,7 +96,7 @@ function App() {
           />
         </FormProvider>
       </div>
-      <div id="graph-container">
+      <div id='graph-container'>
         {controlWatch.graphs && (
           <CircleSeriesRenderCanvas
             circleSeriesDefinitions={preparedSeriesDefinitions(values.graphs)}

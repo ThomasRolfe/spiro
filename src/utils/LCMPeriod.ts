@@ -15,55 +15,31 @@ const fixedPrimes = [
 
 // frequencies assumed to be float between 0 & 10 with a maximum 1 decimal place
 export const LCMPeriod = (frequencies: number[]) => {
-  console.log({ frequencies })
-  const multipliedFrequencies = frequencies.map((frequency) => {
-    return Math.trunc(frequency * 100)
-  })
-
-  const frequencyPrimeFactors = new Map()
-
-  for (let i = 0; multipliedFrequencies.length > i; i++) {
-    let remainder = multipliedFrequencies[i]
-    const factors = new Map()
-    const tempPrimes = [...fixedPrimes]
-    let currentPrime = tempPrimes.shift()
-    while (remainder > 1) {
-      if (!currentPrime) {
-        throw Error('Ran out of prime numbers')
-      }
-      // Number is divisible by current prime
-      if (remainder % currentPrime === 0) {
-        factors.set(currentPrime, (factors.get(currentPrime) ?? 0) + 1)
-        remainder = remainder / currentPrime
-        continue
-      }
-
-      // Number is not divisible by current prime
-      currentPrime = tempPrimes.shift()
+  // Helper function to find GCD using Euclidean algorithm
+  const gcd = (a: number, b: number): number => {
+    while (b !== 0) {
+      const temp = b
+      b = a % b
+      a = temp
     }
-
-    frequencyPrimeFactors.set(multipliedFrequencies[i], factors)
+    return a
   }
 
-  // Look at all factors & take only the highest value of factor for each
-  const greatestPrimeFactors = new Map()
+  // Helper function to find LCM of two numbers
+  const lcm = (a: number, b: number): number => {
+    return Math.abs(a * b) / gcd(a, b)
+  }
 
-  frequencyPrimeFactors.forEach((primeCountMap) => {
-    primeCountMap.forEach((count: number, primeFactor: number) => {
-      const currentPrimeCount = greatestPrimeFactors.get(primeFactor) ?? 0
+  // Find how many rotations each frequency makes in 1 second
+  const rotationsPerSecond = frequencies.map((freq) => Math.round(freq * 100))
 
-      greatestPrimeFactors.set(primeFactor, Math.max(currentPrimeCount, count))
-    })
-  })
+  // Find GCD of all rotations
+  const gcdRotations = rotationsPerSecond.reduce((a, b) => gcd(a, b))
 
-  let multipliedPrimeFactors = 1
+  // The time period is 1 second divided by the GCD
+  const result = 100 / gcdRotations
 
-  greatestPrimeFactors.forEach((primeCount, prime) => {
-    multipliedPrimeFactors *= prime ** primeCount
-  })
+  console.log({ result })
 
-  console.log('greatestPrimeFactors', greatestPrimeFactors)
-  console.log('lcm', multipliedPrimeFactors / 100)
-
-  return multipliedPrimeFactors / 100
+  return result
 }

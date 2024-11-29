@@ -12,8 +12,8 @@ type CircleProps = {
 
 export const Circle = ({ store, index, radius }: CircleProps) => {
   const circleRef = useRef(store.getState().circles[index])
-  const lineRef = useRef()
-  const meshRef = useRef()
+  const lineRef = useRef<THREE.Line>(null)
+  const meshRef = useRef<THREE.Mesh>(null)
 
   useEffect(() => {
     store.subscribe((state) => (circleRef.current = state.circles[index]))
@@ -36,13 +36,13 @@ export const Circle = ({ store, index, radius }: CircleProps) => {
 
   return (
     <>
-      <mesh ref={meshRef} position={[0, 0, 0]} color="black">
+      <mesh ref={meshRef} position={[0, 0, 0]}>
         <ringGeometry args={[radius, radius + 0.01, 50]} />
-        <lineBasicMaterial color="#60cdf7" />
+        <lineBasicMaterial color='white' />
       </mesh>
       <line ref={lineRef}>
         <bufferGeometry />
-        <lineDashedMaterial dashSize={1} gapSize={2} color="red" />
+        <lineDashedMaterial dashSize={1} gapSize={2} color='white' />
       </line>
     </>
   )

@@ -5,6 +5,7 @@ export default {
     extend: {
       colors: {
         primary: '#edb124',
+        'light-border': '#374151',
       },
     },
   },

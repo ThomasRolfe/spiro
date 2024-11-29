@@ -1,146 +1,240 @@
 import { Field, Label, Switch } from '@headlessui/react'
 import { PlusIcon, TrashIcon } from '@heroicons/react/20/solid'
-import { useEffect } from 'react'
-import { useForm, useFormContext } from 'react-hook-form'
-import { defaultGear } from '../presets/default'
+import {
+  useCircleStore,
+  useShowBlueprint,
+  useColor,
+} from '../store/useCircleStore'
+import { useState } from 'react'
 
-type ControlsProps = {
-  circleSeriesState: []
-  setCircleSeriesState: () => {}
-  generalState: []
-}
-
-export const Controls = ({
-  circleSeriesState,
-  setCircleSeriesState,
-  generalState,
-}: ControlsProps) => {
+export const Controls = () => {
   return (
-    <>
-      <div id="controls-menu-container">menu stuff</div>
-      <div id="controls-editor-container">
-        <CircleSeriesForm
-          state={circleSeriesState}
-          setState={setCircleSeriesState}
-        />
-      </div>
-    </>
+    <div id='controls-editor-container' className=''>
+      <CircleSeriesForm />
+    </div>
   )
-
-  // state of overall controls (general speed, show grid?, debug mode)
 }
 
-const CircleSeriesForm = ({ state, setState }) => {
-  const { getValues } = useFormContext()
-  const circleSeries = getValues('graphs.0.circleSeries') ?? []
-  console.log({ circleSeries })
-
+const CircleSeriesForm = () => {
+  const circles = useCircleStore((state) => state.circles)
+  const addGear = useCircleStore((state) => state.addGear)
+  if (!circles) {
+    return
+  }
   return (
-    <div className="form-container m-4 grid gap-4 bg-white rounded ">
-      {circleSeries.map((circleSeriesGear, index) => {
-        return (
-          <CircleGearForm
-            key={`circle-gear-form-${index}`}
-            index={index}
-            gearCount={circleSeries.length}
-          />
-        )
-      })}
-      {/* <CircleGearForm key={`circle-gear-form-${0}`} index={0} />
-      <CircleGearForm key={`circle-gear-form-${1}`} index={1} />
-      <CircleGearForm key={`circle-gear-form-${2}`} index={2} /> */}
+    <div className='form-container m-4 grid gap-4 rounded'>
+      {circles.map((_, index) => (
+        <CircleGearForm
+          key={`circle-gear-form-${index}`}
+          index={index}
+          gearCount={circles.length}
+        />
+      ))}
+      <AddGearForm onAdd={addGear} />
       <CircleRenderForm />
     </div>
   )
 }
 
-const CircleGearForm = ({
-  index,
-  gearCount,
-}: {
-  index: number
-  gearCount: number
-}) => {
-  const { register, unregister } = useFormContext()
+const CircleGearForm = ({ index }: { index: number }) => {
+  const circles = useCircleStore((state) => state.circles)
+  const updateGear = useCircleStore((state) => state.updateGear)
+  const removeGear = useCircleStore((state) => state.removeGear)
 
-  const unregisterFields = () => {
-    const fields = ['speed', 'angle', 'radius', 'direction']
-    fields.forEach((field) => {
-      unregister(`circleSeries.${index}.${field}`)
-    })
+  const [localValues, setLocalValues] = useState({
+    radius: circles[index].radius,
+    startAngle: circles[index].startAngle,
+    speed: circles[index].speed,
+    direction: circles[index].direction,
+  })
+
+  const handleInputComplete = (field: string, value: number | string) => {
+    updateGear(index, { [field]: value })
   }
 
-  console.log({ index, gearCount })
   return (
-    <>
-      <div className="-sm p-4">
-        <div className="flex justify-between">
-          <h3 className="font-bold">
-            {index === 0 ? 'Base gear' : `Gear ${index + 1}`}
-          </h3>
-          {index !== 0 && (
-            <button className="" onClick={() => unregisterFields()}>
-              <TrashIcon className="-ml-1 -mr-0.5 h-5 w-5 text-red-500 hover:text-red-600" />
-            </button>
-          )}
-        </div>
+    <div className='-sm p-4 border border-light-border rounded-md'>
+      <div className='flex justify-between'>
+        <h3 className='font-bold'>
+          {index === 0 ? 'Base gear' : `Gear ${index + 1}`}
+        </h3>
+        {index !== 0 && (
+          <button className='' onClick={() => removeGear(index)}>
+            <TrashIcon className='-ml-1 -mr-0.5 h-5 w-5 text-white hover:text-grey-50' />
+          </button>
+        )}
+      </div>
+      <div className='grid grid-cols-2 gap-4 mt-4'>
         <NumberInput
-          name="radius"
-          label="Radius"
+          name='radius'
+          label='Radius'
+          value={localValues.radius}
+          onChange={(value) =>
+            setLocalValues((prev) => ({ ...prev, radius: value }))
+          }
+          onComplete={(value) => handleInputComplete('radius', value)}
           min={0.1}
           max={4}
           step={0.1}
-          placeholder="eg. 2.5"
+          placeholder='eg. 2.5'
           defaultValue={1}
           index={index}
+          className='col-span-1'
         />
         <NumberInput
-          name="angle"
-          label="Angle"
+          name='angle'
+          label='Angle'
+          value={localValues.startAngle ?? 0}
+          onChange={(value) =>
+            setLocalValues((prev) => ({ ...prev, startAngle: value }))
+          }
+          onComplete={(value) => handleInputComplete('startAngle', value)}
           min={0}
           max={360}
           step={1}
-          placeholder="Starting angle in degrees"
+          placeholder='Starting angle in degrees'
           defaultValue={0}
           index={index}
+          className='col-span-1'
         />
         <NumberInput
-          name="speed"
-          label="Speed"
+          name='speed'
+          label='Speed'
+          value={localValues.speed}
+          onChange={(value) =>
+            setLocalValues((prev) => ({ ...prev, speed: value }))
+          }
+          onComplete={(value) => handleInputComplete('speed', value)}
           min={0.1}
           max={9.9}
           step={0.01}
-          placeholder="Rotational speed"
+          placeholder='Rotational speed'
           defaultValue={1}
           index={index}
+          className='col-span-1'
         />
-        <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 mt-2">
+        <div className='col-span-1 sm:grid sm:grid-cols-1 sm:items-start sm:gap-2'>
           <label
-            htmlFor={`graphs.0.circleSeries.${index}.direction`}
-            className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5"
+            htmlFor={`direction-${index}`}
+            className='block text-sm font-light leading-6 text-white'
           >
             Direction
           </label>
-          <div className="mt-2 sm:col-span-2 sm:mt-0">
-            <div className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-sky-500 sm:max-w-md">
+          <div className='mt-2 sm:col-span-2 sm:mt-0 text-white'>
+            <div className='flex rounded-md shadow-sm ring-1 ring-inset ring-light-border focus-within:ring-2 focus-within:ring-inset focus-within:ring-sky-500 sm:max-w-md'>
               <select
-                id={`graphs.0.circleSeries.${index}.direction`}
-                defaultValue="Clockwise"
-                className="block flex-1 border-0 bg-transparent py-1.5 pl-2 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
-                {...register(`graphs.0.circleSeries.${index}.direction`)}
+                id={`direction-${index}`}
+                value={localValues.direction}
+                onChange={(e) => {
+                  setLocalValues((prev) => ({
+                    ...prev,
+                    direction: e.target.value,
+                  }))
+                  handleInputComplete('direction', e.target.value)
+                }}
+                className='block w-full border-0 bg-transparent py-1.5 pl-2 pr-8 text-white focus:ring-0 sm:text-sm sm:leading-6 appearance-none [&>option]:bg-slate-900 [&>option]:text-white'
+                style={{
+                  WebkitAppearance: 'none',
+                  MozAppearance: 'none',
+                  // backgroundColor: 'rgb(30 41 59)',
+                }}
               >
-                <option value="cw">Clockwise</option>
-                <option value="acw">Anti-clockwise</option>
+                <option value='cw' className='bg-slate-900 text-white'>
+                  Clockwise
+                </option>
+                <option value='acw' className='bg-slate-900 text-white'>
+                  Anti-clockwise
+                </option>
               </select>
+              <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2'>
+                <svg
+                  className='h-4 w-4 text-gray-400'
+                  xmlns='http://www.w3.org/2000/svg'
+                  viewBox='0 0 20 20'
+                  fill='currentColor'
+                >
+                  <path
+                    fillRule='evenodd'
+                    d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z'
+                    clipRule='evenodd'
+                  />
+                </svg>
+              </div>
             </div>
           </div>
         </div>
-        {/*  */}
       </div>
-      <Divider
-        showAddGear={index > 0 && index + 1 === gearCount && index < 5}
-      />
-    </>
+    </div>
+  )
+}
+
+const CircleRenderForm = () => {
+  const color = useColor()
+  const showBlueprint = useShowBlueprint()
+  const { setColor, setShowBlueprint } = useCircleStore()
+
+  return (
+    <div className='border border-light-border rounded-md p-4'>
+      <div className='sm:grid sm:grid-cols-3 sm:items-start sm:gap-4'>
+        <label
+          htmlFor={`graphs.0.renderSettings.color`}
+          className='block text-sm font-medium leading-6 text-white'
+        >
+          Color
+        </label>
+        <div className='mt-2 sm:col-span-2 sm:mt-0'>
+          <div className='flex rounded-md shadow-sm ring-1 ring-inset ring-light-border focus-within:ring-2 focus-within:ring-inset focus-within:ring-sky-500 sm:max-w-md'>
+            <input
+              id={`graphs.0.renderSettings.color`}
+              type='color'
+              value={color}
+              onChange={(e) => setColor(e.target.value)}
+              className='block flex-1 border-0 bg-transparent py-1.5 px-2 text-white placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6'
+            />
+          </div>
+        </div>
+      </div>
+
+      <Field className='flex items-center justify-between mt-2'>
+        <span className='flex flex-grow flex-col'>
+          <Label
+            as='span'
+            passive
+            className='text-sm font-medium leading-6 text-white'
+          >
+            Show blueprint
+          </Label>
+        </span>
+        <Switch
+          checked={showBlueprint}
+          onChange={setShowBlueprint}
+          className='group relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-gray-200 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 data-[checked]:bg-sky-500'
+        >
+          <span
+            aria-hidden='true'
+            className='pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out group-data-[checked]:translate-x-5'
+          />
+        </Switch>
+      </Field>
+    </div>
+  )
+}
+
+const AddGearForm = ({ onAdd }: { onAdd: () => void }) => {
+  return (
+    <div className='relative flex justify-center'>
+      <button
+        type='button'
+        className='w-full flex justify-center rounded border border-light-border px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
+        onClick={onAdd}
+      >
+        <PlusIcon
+          aria-hidden='true'
+          className='-ml-1 mr-2 h-5 w-5 text-gray-400'
+        />
+        <span>Add gear</span>
+      </button>
+    </div>
   )
 }
 
@@ -150,9 +244,13 @@ type NumberInputProps = {
   min: number
   max: number
   step: number
-  defaultValue: number
+  value: number
+  onChange: (value: number) => void
+  onComplete: (value: number) => void
   placeholder: string
   index: number
+  className?: string
+  defaultValue: number
 }
 
 const NumberInput = ({
@@ -161,127 +259,41 @@ const NumberInput = ({
   min,
   max,
   step,
-  defaultValue,
+  value,
+  onChange,
+  onComplete,
   placeholder,
   index,
 }: NumberInputProps) => {
-  const { register } = useFormContext()
-  const fieldName = `graphs.0.circleSeries.${index}.${name}`
   return (
-    <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 mt-2">
+    <div className='sm:grid sm:grid-cols-1 sm:items-start sm:gap-2 '>
       <label
-        htmlFor={fieldName}
-        className="block text-sm font-medium leading-6 text-gray-900 sm:pt-1.5"
+        htmlFor={`${name}-${index}`}
+        className='block text-sm font-light leading-6 text-white '
       >
         {label}
       </label>
-      <div className="mt-2 sm:col-span-2 sm:mt-0">
-        <div className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-sky-500 sm:max-w-md">
+      <div className='sm:mt-0'>
+        <div className='flex rounded-md shadow-sm ring-1 ring-inset ring-light-border focus-within:ring-2 focus-within:ring-inset focus-within:ring-sky-500 sm:max-w-md'>
           <input
-            id={fieldName}
-            type="number"
+            id={`${name}-${index}`}
+            type='number'
             min={min}
             max={max}
             step={step}
-            defaultValue={defaultValue}
-            placeholder={placeholder ?? ''}
-            className="block flex-1 border-0 bg-transparent py-1.5 px-2 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
-            {...register(fieldName)}
-          />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-const CircleRenderForm = () => {
-  const { register, unregister, setValue, getValues } = useFormContext()
-
-  useEffect(() => {
-    register('graphs.0.renderSettings.showBlueprint')
-  }, [register])
-
-  return (
-    <div className="bg-white rounded-sm p-4">
-      <div className="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4">
-        <label
-          htmlFor={`graphs.0.renderSettings.color`}
-          className="block text-sm font-medium leading-6 text-gray-900"
-        >
-          Color
-        </label>
-        <div className="mt-2 sm:col-span-2 sm:mt-0">
-          <div className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-sky-500 sm:max-w-md">
-            <input
-              id={`graphs.0.renderSettings.color`}
-              type="color"
-              defaultValue={'#7116cc'}
-              className="block flex-1 border-0 bg-transparent py-1.5 px-2 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
-              {...register(`graphs.0.renderSettings.color`)}
-            />
-          </div>
-        </div>
-      </div>
-
-      <Field className="flex items-center justify-between mt-2">
-        <span className="flex flex-grow flex-col">
-          <Label
-            as="span"
-            passive
-            className="text-sm font-medium leading-6 text-gray-900"
-          >
-            Show blueprint
-          </Label>
-        </span>
-        <Switch
-          checked={getValues('graphs.0.renderSettings.showBlueprint')}
-          onChange={(isChecked) => {
-            setValue('graphs.0.renderSettings.showBlueprint', isChecked)
-          }}
-          className="group relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-gray-200 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 data-[checked]:bg-sky-500"
-        >
-          <span
-            aria-hidden="true"
-            className="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out group-data-[checked]:translate-x-5"
-          />
-        </Switch>
-      </Field>
-    </div>
-  )
-}
-
-const Divider = ({ showAddGear = false }: { showAddGear?: boolean }) => {
-  const { register, setValue, getValues } = useFormContext()
-
-  const addGearControl = () => {
-    const currentCircleSeries = getValues('graphs.0.circleSeries')
-    const newSeriesPropertyName = `graphs.0.circleSeries.${currentCircleSeries.length}`
-    register(newSeriesPropertyName)
-    setValue(newSeriesPropertyName, defaultGear)
-  }
-
-  return (
-    <div className="relative mx-4">
-      <div aria-hidden="true" className="absolute inset-0 flex items-center">
-        <div className="w-full border-t border-gray-300" />
-      </div>
-      {showAddGear && (
-        <div className="relative flex justify-center">
-          <button
-            type="button"
-            className="inline-flex items-center gap-x-1.5 rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-            onClick={() => {
-              addGearControl()
+            value={value}
+            onChange={(e) => onChange(parseFloat(e.target.value))}
+            onBlur={(e) => onComplete(parseFloat(e.target.value))}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.currentTarget.blur()
+              }
             }}
-          >
-            <PlusIcon
-              aria-hidden="true"
-              className="-ml-1 -mr-0.5 h-5 w-5 text-gray-400"
-            />
-            Add gear
-          </button>
+            placeholder={placeholder ?? ''}
+            className='block flex-1 border-0 bg-transparent py-1.5 px-2 text-white placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6'
+          />
         </div>
-      )}
+      </div>
     </div>
   )
 }
