@@ -1,7 +1,7 @@
 import { create } from 'zustand'
-import { circles3, defaultGear, initCircles } from '../presets/default'
+import { defaultGear, initCircles } from '../presets/default'
 import * as THREE from 'three'
-import { CircleSeriesGear } from '../graphRenderer/CircleSeriesRenderer'
+// import { CircleSeriesGear } from '../graphRenderer/CircleSeriesRenderer'
 
 export interface CircleGear {
   index: number
@@ -35,12 +35,13 @@ export interface CircleStore {
   setColor: (color: string) => void
   setShowBlueprint: (show: boolean) => void
   setComplete: (complete: boolean) => void
+  setCircles: (circles: CircleGear[]) => void
 }
 
 const FIXED_DELTA = 2
 
 export const useCircleStore = create<CircleStore>((set, get) => ({
-  circles: circles3,
+  circles: initCircles,
   angleDelta: 0,
   points: [],
   color: '#07F2CB',
@@ -123,6 +124,13 @@ export const useCircleStore = create<CircleStore>((set, get) => ({
       }
       return { points: newPoints }
     }),
+
+  setCircles: (circles: CircleGear[]) => {
+    set({ circles })
+    requestAnimationFrame(() => {
+      get().resetPoints()
+    })
+  },
 
   resetPoints: () =>
     set({

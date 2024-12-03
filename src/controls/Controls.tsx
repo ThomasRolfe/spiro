@@ -1,4 +1,13 @@
-import { Field, Label, Switch } from '@headlessui/react'
+import {
+  Field,
+  Label,
+  Switch,
+  Tab,
+  TabGroup,
+  TabList,
+  TabPanel,
+  TabPanels,
+} from '@headlessui/react'
 import { PlusIcon, TrashIcon } from '@heroicons/react/20/solid'
 import {
   useCircleStore,
@@ -6,11 +15,45 @@ import {
   useColor,
 } from '../store/useCircleStore'
 import { useState } from 'react'
+import { classNames } from '../utils/classNames'
+import { presets } from '../presets/default'
 
 export const Controls = () => {
+  const tabs = [
+    { name: 'Edit', component: <CircleSeriesForm /> },
+    { name: 'Presets', component: <PresetsForm /> },
+  ]
+
   return (
-    <div id='controls-editor-container' className=''>
-      <CircleSeriesForm />
+    <div id='controls-editor-container' className='p-4'>
+      <TabGroup>
+        <TabList className='flex space-x-1 rounded-xl bg-slate-800/50 p-1'>
+          {tabs.map((tab) => (
+            <Tab
+              key={tab.name}
+              className={({ selected }) =>
+                classNames(
+                  'w-full rounded-md py-2.5 text-sm font-medium leading-5',
+                  'ring-transparent focus:outline-none focus:ring-2',
+                  selected
+                    ? 'bg-sky-500 text-white shadow'
+                    : 'text-gray-400 hover:bg-slate-700/50 hover:text-white'
+                )
+              }
+            >
+              {tab.name}
+            </Tab>
+          ))}
+        </TabList>
+        <TabPanels className='mt-4'>
+          <TabPanel>
+            <CircleSeriesForm />
+          </TabPanel>
+          <TabPanel>
+            <PresetsForm />
+          </TabPanel>
+        </TabPanels>
+      </TabGroup>
     </div>
   )
 }
@@ -22,13 +65,9 @@ const CircleSeriesForm = () => {
     return
   }
   return (
-    <div className='form-container m-4 grid gap-4 rounded'>
+    <div className='form-container grid gap-4 rounded'>
       {circles.map((_, index) => (
-        <CircleGearForm
-          key={`circle-gear-form-${index}`}
-          index={index}
-          gearCount={circles.length}
-        />
+        <CircleGearForm key={`circle-gear-form-${index}`} index={index} />
       ))}
       <AddGearForm onAdd={addGear} />
       <CircleRenderForm />
@@ -49,7 +88,12 @@ const CircleGearForm = ({ index }: { index: number }) => {
   })
 
   const handleInputComplete = (field: string, value: number | string) => {
-    updateGear(index, { [field]: value })
+    const currentValue = circles[index][field]
+    const newValue = typeof currentValue === 'number' ? Number(value) : value
+
+    if (currentValue !== newValue) {
+      updateGear(index, { [field]: newValue })
+    }
   }
 
   return (
@@ -136,7 +180,6 @@ const CircleGearForm = ({ index }: { index: number }) => {
                 style={{
                   WebkitAppearance: 'none',
                   MozAppearance: 'none',
-                  // backgroundColor: 'rgb(30 41 59)',
                 }}
               >
                 <option value='cw' className='bg-slate-900 text-white'>
@@ -146,20 +189,6 @@ const CircleGearForm = ({ index }: { index: number }) => {
                   Anti-clockwise
                 </option>
               </select>
-              <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2'>
-                <svg
-                  className='h-4 w-4 text-gray-400'
-                  xmlns='http://www.w3.org/2000/svg'
-                  viewBox='0 0 20 20'
-                  fill='currentColor'
-                >
-                  <path
-                    fillRule='evenodd'
-                    d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z'
-                    clipRule='evenodd'
-                  />
-                </svg>
-              </div>
             </div>
           </div>
         </div>
@@ -265,6 +294,10 @@ const NumberInput = ({
   placeholder,
   index,
 }: NumberInputProps) => {
+  const handleComplete = (newValue: number) => {
+    onComplete(Number(newValue))
+  }
+
   return (
     <div className='sm:grid sm:grid-cols-1 sm:items-start sm:gap-2 '>
       <label
@@ -283,7 +316,7 @@ const NumberInput = ({
             step={step}
             value={value}
             onChange={(e) => onChange(parseFloat(e.target.value))}
-            onBlur={(e) => onComplete(parseFloat(e.target.value))}
+            onBlur={(e) => handleComplete(parseFloat(e.target.value))}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.currentTarget.blur()
@@ -294,6 +327,24 @@ const NumberInput = ({
           />
         </div>
       </div>
+    </div>
+  )
+}
+
+const PresetsForm = () => {
+  const setCircles = useCircleStore((state) => state.setCircles)
+  return (
+    <div className='grid gap-4'>
+      {presets.map((preset) => {
+        return (
+          <button
+            onClick={() => setCircles(preset.circles)}
+            className='block w-full border border-light-border rounded-md p-4'
+          >
+            <h2 className='text-white text-lg font-medium'>{preset.name}</h2>
+          </button>
+        )
+      })}
     </div>
   )
 }

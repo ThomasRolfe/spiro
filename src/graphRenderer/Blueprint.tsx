@@ -1,9 +1,11 @@
-import { Line, Sphere } from '@react-three/drei'
+import { Line } from '@react-three/drei'
 import { degreesToRads } from '../utils/degreesToRads'
 import {
   useCircleStore,
   useShowBlueprint,
   useColor,
+  CircleGearFrame,
+  CircleGear,
 } from '../store/useCircleStore'
 
 export const Blueprint = () => {
@@ -39,7 +41,7 @@ const BlueprintGear = ({
 }) => {
   const color = useColor()
   const points: [number, number, number][] = []
-  const segments = 32 // Number of segments to create the circle
+  const segments = 100 // Number of segments to create the circle
 
   // Create circle points
   for (let i = 0; i <= segments; i++) {
@@ -73,7 +75,7 @@ const BlueprintGear = ({
 
       {/* Center to edge line */}
       <Line
-        points={[frame.origin, armEnd]}
+        points={[frame.origin as [x: number, y: number], armEnd]}
         color='#666666'
         lineWidth={1}
         dashed={false}

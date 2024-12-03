@@ -15,13 +15,13 @@
 
 #page-container {
   display: grid;
-  grid-template-columns: [controls] minmax(320px, 500px) [graphcanvas] 4fr [end];
+  grid-template-columns: [controls] minmax(320px, 500px) [graphcanvas] 1fr [end];
   grid-template-rows: 1fr;
   height: 100vh;
 }
 
 #graph-container {
-  grid-column-start: controls;
+  grid-column-start: graphcanvas;
   grid-column-end: end;
   grid-row-start: 1;
   grid-row-end: 2;
@@ -44,7 +44,3 @@
   grid-column-end: control-end;
 }
 
-/* #controls-menu-container {
-  grid-column-start: control-menu;
-  grid-column-end: control-editor;
-} */

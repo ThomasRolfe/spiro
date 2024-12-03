@@ -1,29 +1,17 @@
 import { Canvas } from '@react-three/fiber'
-import { CameraControls, OrbitControls, Plane } from '@react-three/drei'
+import { OrbitControls, Plane } from '@react-three/drei'
 import { Perf } from 'r3f-perf'
-import { CircleSeriesGear, CircleSeriesRenderer } from './CircleSeriesRenderer'
+import { CircleSeriesRenderer } from './CircleSeriesRenderer'
 
-export type circleSeriesRenderCanvasProps = {
-  circleSeriesDefinitions: circleSeriesDefinition[]
-}
+export const CircleSeriesRenderCanvas = () => {
+  const params = new URLSearchParams(document.location.search)
+  const debug = params.get('debug')
 
-export type circleSeriesDefinition = {
-  renderSettings: {
-    color: string
-    showBlueprint: boolean
-  }
-  circleSeries: CircleSeriesGear[]
-}
-
-export const CircleSeriesRenderCanvas = ({
-  circleSeriesDefinitions,
-}: circleSeriesRenderCanvasProps) => {
   return (
     <div id='canvas-container'>
-      <Canvas camera={{ position: [-2, 0, 5] }}>
-        {/* <axesHelper /> */}
+      <Canvas camera={{ position: [0, 0, 5] }}>
         <gridHelper
-          args={[150, 300, '#232433', '#303244']}
+          args={[150, 300, '#1d1e2a', '#1d1e2a']}
           rotation={[Math.PI / 2, 0, 0]}
           position={[0, 0, -0.01]}
         />
@@ -34,26 +22,20 @@ export const CircleSeriesRenderCanvas = ({
         >
           <meshBasicMaterial color='#232433' />
         </Plane>
-        <Perf />
+        {debug && (
+          <>
+            <Perf />
+            <axesHelper />
+          </>
+        )}
         <OrbitControls
           enableRotate={false}
           enablePan={true}
           maxDistance={20}
           minDistance={3}
-          target={[-2, 0, 0]}
+          target={[0, 0, 0]}
         />
-        {circleSeriesDefinitions.map((circleSeriesDefinition, index) => {
-          return (
-            <CircleSeriesRenderer
-              key={index}
-              showBlueprint={
-                circleSeriesDefinition?.renderSettings?.showBlueprint ?? false
-              }
-              color={circleSeriesDefinition?.renderSettings?.color ?? 'blue'}
-              circleSeries={circleSeriesDefinition.circleSeries}
-            />
-          )
-        })}
+        <CircleSeriesRenderer />
       </Canvas>
     </div>
   )
