@@ -114,10 +114,6 @@ export const useCircleStore = create<CircleStore>((set, get) => ({
 
   addPoint: (point) =>
     set((state) => {
-      if (!(point instanceof THREE.Vector2)) {
-        point = new THREE.Vector2(point.x, point.y)
-      }
-
       const newPoints = [...state.points, point]
       if (newPoints.length > 10000) {
         return { points: newPoints.slice(-10000) }
