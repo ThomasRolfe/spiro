@@ -13,6 +13,7 @@ import {
   useCircleStore,
   useShowBlueprint,
   useColor,
+  CircleGear,
 } from '../store/useCircleStore'
 import { useState } from 'react'
 import { classNames } from '../utils/classNames'
@@ -87,7 +88,14 @@ const CircleGearForm = ({ index }: { index: number }) => {
     direction: circles[index].direction,
   })
 
-  const handleInputComplete = (field: string, value: number | string) => {
+  if (!circles[index]) {
+    return
+  }
+
+  const handleInputComplete = (
+    field: keyof CircleGear,
+    value: number | string
+  ) => {
     const currentValue = circles[index][field]
     const newValue = typeof currentValue === 'number' ? Number(value) : value
 
