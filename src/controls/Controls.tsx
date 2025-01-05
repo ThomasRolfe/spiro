@@ -15,6 +15,9 @@ import {
   useColor,
   CircleGear,
   useSpeed,
+  useShowGrid,
+  useBackgroundColor,
+  useGridColor,
 } from '../store/useCircleStore'
 import { useState } from 'react'
 import { classNames } from '../utils/classNames'
@@ -208,31 +211,76 @@ const CircleGearForm = ({ index }: { index: number }) => {
 
 const CircleRenderForm = () => {
   const color = useColor()
+  const backgroundColor = useBackgroundColor()
+  const gridColor = useGridColor()
   const showBlueprint = useShowBlueprint()
+  const showGrid = useShowGrid()
   const speed = useSpeed()
-  const { setColor, setShowBlueprint, setSpeed } = useCircleStore()
+  const {
+    setColor,
+    setShowBlueprint,
+    setShowGrid,
+    setSpeed,
+    setBackgroundColor,
+    setGridColor,
+    resetPoints,
+  } = useCircleStore()
 
   return (
     <div className='border border-light-border rounded-md p-4'>
-      <div className='sm:grid sm:grid-cols-3 sm:items-start sm:gap-4'>
-        <label
-          htmlFor={`graphs.0.renderSettings.color`}
-          className='block text-sm font-medium leading-6 text-white'
-        >
-          Color
-        </label>
-        <div className='mt-2 sm:col-span-2 sm:mt-0'>
-          <div className='flex rounded-md shadow-sm ring-1 ring-inset ring-light-border focus-within:ring-2 focus-within:ring-inset focus-within:ring-sky-500 sm:max-w-md'>
-            <input
-              id={`graphs.0.renderSettings.color`}
-              type='color'
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-              className='block flex-1 border-0 bg-transparent py-1.5 px-2 text-white placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6'
-            />
-          </div>
-        </div>
-      </div>
+      <Field className='grid grid-cols-2'>
+        <span className='flex flex-grow flex-col'>
+          <Label
+            as='span'
+            passive
+            className='text-sm font-medium leading-6 text-white'
+          >
+            Graph color
+          </Label>
+        </span>
+        <input
+          type='color'
+          value={color}
+          onChange={(e) => setColor(e.target.value)}
+          className='w-full block flex-1 border-0 bg-transparent py-1 px-2 text-white placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6 hover:cursor-pointer'
+        />
+      </Field>
+
+      <Field className='grid grid-cols-2 mt-2'>
+        <span className='flex flex-grow flex-col'>
+          <Label
+            as='span'
+            passive
+            className='text-sm font-medium leading-6 text-white'
+          >
+            Canvas color
+          </Label>
+        </span>
+        <input
+          type='color'
+          value={backgroundColor}
+          onChange={(e) => setBackgroundColor(e.target.value)}
+          className='w-full block flex-1 border-0 bg-transparent py-1 px-2 text-white placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6 hover:cursor-pointer'
+        />
+      </Field>
+
+      <Field className='grid grid-cols-2 mt-2'>
+        <span className='flex flex-grow flex-col'>
+          <Label
+            as='span'
+            passive
+            className='text-sm font-medium leading-6 text-white'
+          >
+            Grid Color
+          </Label>
+        </span>
+        <input
+          type='color'
+          value={gridColor}
+          onChange={(e) => setGridColor(e.target.value)}
+          className='w-full block flex-1 border-0 bg-transparent py-1 px-2 text-white placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6 hover:cursor-pointer'
+        />
+      </Field>
 
       <Field className='flex items-center justify-between mt-2'>
         <span className='flex flex-grow flex-col'>
@@ -255,6 +303,29 @@ const CircleRenderForm = () => {
           />
         </Switch>
       </Field>
+
+      <Field className='flex items-center justify-between mt-2'>
+        <span className='flex flex-grow flex-col'>
+          <Label
+            as='span'
+            passive
+            className='text-sm font-medium leading-6 text-white'
+          >
+            Show grid
+          </Label>
+        </span>
+        <Switch
+          checked={showGrid}
+          onChange={setShowGrid}
+          className='group relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-gray-200 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 data-[checked]:bg-sky-500'
+        >
+          <span
+            aria-hidden='true'
+            className='pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out group-data-[checked]:translate-x-5'
+          />
+        </Switch>
+      </Field>
+
       <Field className='flex items-center justify-between mt-2 sm:gap-4'>
         <span className='flex flex-grow flex-col'>
           <label
@@ -269,11 +340,20 @@ const CircleRenderForm = () => {
           type='range'
           value={speed}
           min={1}
-          max={10}
+          max={20}
           step={0.1}
           onChange={(e) => setSpeed(Number(e.target.value))}
           className='w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700'
         />
+      </Field>
+
+      <Field className='flex items-center justify-between mt-2'>
+        <button
+          onClick={resetPoints}
+          className='w-full px-3 py-2 text-sm font-semibold text-white bg-transparent rounded-md hover:bg-sky-100/10 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 border border-light-border'
+        >
+          Reset graph
+        </button>
       </Field>
     </div>
   )

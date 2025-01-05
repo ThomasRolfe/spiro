@@ -25,6 +25,9 @@ export interface CircleStore {
   showBlueprint: boolean
   isComplete: boolean
   speed: number
+  showGrid: boolean
+  backgroundColor: string
+  gridColor: string
 
   // Actions
   addGear: () => void
@@ -38,6 +41,9 @@ export interface CircleStore {
   setComplete: (complete: boolean) => void
   setCircles: (circles: CircleGear[]) => void
   setSpeed: (speed: number) => void
+  setShowGrid: (show: boolean) => void
+  setBackgroundColor: (color: string) => void
+  setGridColor: (color: string) => void
 }
 
 export const useCircleStore = create<CircleStore>((set, get) => ({
@@ -48,6 +54,9 @@ export const useCircleStore = create<CircleStore>((set, get) => ({
   showBlueprint: true,
   isComplete: false,
   speed: 2,
+  showGrid: true,
+  backgroundColor: '#232433',
+  gridColor: '#1d1e2a',
 
   addGear: () =>
     set((state) => {
@@ -143,6 +152,12 @@ export const useCircleStore = create<CircleStore>((set, get) => ({
   setComplete: (complete) => set({ isComplete: complete }),
 
   setSpeed: (speed) => set({ speed }),
+
+  setShowGrid: (show) => set({ showGrid: show }),
+
+  setBackgroundColor: (color) => set({ backgroundColor: color }),
+
+  setGridColor: (color) => set({ gridColor: color }),
 }))
 
 // Selector functions to minimize re-renders
@@ -153,3 +168,7 @@ export const useShowBlueprint = () =>
   useCircleStore((state) => state.showBlueprint)
 export const useIsComplete = () => useCircleStore((state) => state.isComplete)
 export const useSpeed = () => useCircleStore((state) => state.speed)
+export const useShowGrid = () => useCircleStore((state) => state.showGrid)
+export const useBackgroundColor = () =>
+  useCircleStore((state) => state.backgroundColor)
+export const useGridColor = () => useCircleStore((state) => state.gridColor)
