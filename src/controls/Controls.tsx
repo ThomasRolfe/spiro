@@ -14,6 +14,7 @@ import {
   useShowBlueprint,
   useColor,
   CircleGear,
+  useSpeed,
 } from '../store/useCircleStore'
 import { useState } from 'react'
 import { classNames } from '../utils/classNames'
@@ -208,7 +209,8 @@ const CircleGearForm = ({ index }: { index: number }) => {
 const CircleRenderForm = () => {
   const color = useColor()
   const showBlueprint = useShowBlueprint()
-  const { setColor, setShowBlueprint } = useCircleStore()
+  const speed = useSpeed()
+  const { setColor, setShowBlueprint, setSpeed } = useCircleStore()
 
   return (
     <div className='border border-light-border rounded-md p-4'>
@@ -252,6 +254,26 @@ const CircleRenderForm = () => {
             className='pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out group-data-[checked]:translate-x-5'
           />
         </Switch>
+      </Field>
+      <Field className='flex items-center justify-between mt-2 sm:gap-4'>
+        <span className='flex flex-grow flex-col'>
+          <label
+            htmlFor='speed'
+            className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'
+          >
+            Speed
+          </label>
+        </span>
+        <input
+          id='speed'
+          type='range'
+          value={speed}
+          min={1}
+          max={10}
+          step={0.1}
+          onChange={(e) => setSpeed(Number(e.target.value))}
+          className='w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700'
+        />
       </Field>
     </div>
   )

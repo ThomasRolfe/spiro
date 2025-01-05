@@ -24,6 +24,7 @@ export interface CircleStore {
   color: string
   showBlueprint: boolean
   isComplete: boolean
+  speed: number
 
   // Actions
   addGear: () => void
@@ -36,9 +37,8 @@ export interface CircleStore {
   setShowBlueprint: (show: boolean) => void
   setComplete: (complete: boolean) => void
   setCircles: (circles: CircleGear[]) => void
+  setSpeed: (speed: number) => void
 }
-
-const FIXED_DELTA = 2
 
 export const useCircleStore = create<CircleStore>((set, get) => ({
   circles: initCircles,
@@ -47,6 +47,7 @@ export const useCircleStore = create<CircleStore>((set, get) => ({
   color: '#07F2CB',
   showBlueprint: true,
   isComplete: false,
+  speed: 2,
 
   addGear: () =>
     set((state) => {
@@ -109,7 +110,7 @@ export const useCircleStore = create<CircleStore>((set, get) => ({
 
   incrementDelta: () =>
     set((state) => ({
-      angleDelta: state.angleDelta + FIXED_DELTA,
+      angleDelta: state.angleDelta + 0.5 * state.speed,
     })),
 
   addPoint: (point) =>
@@ -140,6 +141,8 @@ export const useCircleStore = create<CircleStore>((set, get) => ({
   setShowBlueprint: (show) => set({ showBlueprint: show }),
 
   setComplete: (complete) => set({ isComplete: complete }),
+
+  setSpeed: (speed) => set({ speed }),
 }))
 
 // Selector functions to minimize re-renders
@@ -149,3 +152,4 @@ export const useColor = () => useCircleStore((state) => state.color)
 export const useShowBlueprint = () =>
   useCircleStore((state) => state.showBlueprint)
 export const useIsComplete = () => useCircleStore((state) => state.isComplete)
+export const useSpeed = () => useCircleStore((state) => state.speed)
